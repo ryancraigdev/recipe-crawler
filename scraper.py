@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import json
 
 def parse_recipe(html):
     """
@@ -14,12 +15,24 @@ def parse_recipe(html):
     ingredients = ingredients_bucket.find_all('li')
     ingredients_list = []
     for item in ingredients:
-        text = item.get_text()
+        text = item.get_text().strip()
         ingredients_list.append(text)
+
+    directions_bucket = soup.find('div', class_='mm-recipes-steps__content')
+    directions = directions_bucket.find_all('li')
+    directions_list = []
+    for item in directions:
+        text = item.get_text().strip()
+        directions_list.append(text)
+
     return {
         "title": title,
-        "ingredients": ingredients_list
+        "ingredients": ingredients_list,
+        "directions": directions_list
     }
+def save_to_json(data, filename):
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=2)
 
 def download_html(url):
     """
@@ -29,6 +42,8 @@ def download_html(url):
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
         response = requests.get(url, headers=headers)
         recipe_data = parse_recipe(response.text)
+        save_to_json(recipe_data, "recipe.json")
+        print("Saved to recipe.json")
         print(recipe_data)
     except Exception as e:
         print(f"Error: {e}")
